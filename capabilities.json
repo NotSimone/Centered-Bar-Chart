@@ -1,0 +1,61 @@
+{
+    "dataRoles": [
+        {
+            "displayName": "Buckets",
+            "name": "bucket",
+            "kind": "Grouping"
+        },
+        {
+            "displayName": "Measure Data",
+            "name": "measure",
+            "kind": "Measure",
+            "requiredTypes": [
+                {
+                    "numeric": true
+                }
+            ]
+        },
+        {
+            "displayName": "Line Values",
+            "name": "line",
+            "kind": "Measure",
+            "requiredTypes": [
+                {
+                    "numeric": true
+                }
+            ]
+        }
+    ],
+    "dataViewMappings": [
+        {
+            "conditions": [
+                {
+                    "bucket": { "max": 1, "min": 1 },
+                    "measure": { "max": 1, "min": 1 },
+                    "line": { "max": 1, "min": 1}
+                }
+            ],
+            "table": {
+                "rows": {
+                    "select": [
+                        {
+                            "for": {
+                                "in": "bucket"
+                            }
+                        },
+                        {
+                            "for": {
+                                "in": "measure"
+                            }
+                        },
+                        {
+                            "for": {
+                                "in": "line"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
