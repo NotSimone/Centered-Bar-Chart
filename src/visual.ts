@@ -35,7 +35,6 @@ import ISelectionId = powerbi.extensibility.ISelectionId;
 import IVisual = powerbi.extensibility.visual.IVisual;
 import EnumerateVisualObjectInstancesOptions = powerbi.EnumerateVisualObjectInstancesOptions;
 import VisualObjectInstance = powerbi.VisualObjectInstance;
-import DataView = powerbi.DataView;
 import VisualObjectInstanceEnumerationObject = powerbi.VisualObjectInstanceEnumerationObject;
 import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 import * as d3 from "d3";
@@ -49,7 +48,6 @@ export class Visual implements IVisual {
     private container: Selection<SVGElement>;
     private margin = { top:10, right:30, bottom:90, left:40 };
     private colour = { positive: "green", negative: "red" };
-    private dataIndex: DataIndex = { measure:-1, bucket:-1, line:-1 };
 
     constructor(options: VisualConstructorOptions) {
         this.host = options.host;
@@ -74,32 +72,33 @@ export class Visual implements IVisual {
         height = height - this.margin.top - this.margin.bottom;
         this.container.attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
 
-        // Setup selector
-        options.dataViews[0].table.rows.forEach((row: powerbi.DataViewTableRow, rowIndex: number) => {
-            this.host.createSelectionIdBuilder()
-                .withTable(options.dataViews[0].table, rowIndex)
-                .createSelectionId();
-        });
-
         // Get the data
-        let data: powerbi.DataViewTableRow[] = options.dataViews[0].table.rows;
+        let dataSource: powerbi.DataViewCategorical = options.dataViews[0].categorical;
 
-        // Indexes may change so find the correct index values again
-        // A bit stupid but typescript reflection doesnt seem to work easily
-        // and it is only 3 properties to check
-        for (let name of ["measure", "bucket", "line"]) {
-            for (let i = 0; i < 3; i++) {
-                if (options.dataViews[0].table.columns[i].roles[name]) {
-                    this.dataIndex[name] = i;
-                    continue;
-                }
-            }
+        // Look for the indexes where the value and line reside
+        let measureIndex = 0;
+        let lineIndex = 1;
+        if (!dataSource.values[0].source.roles["measure"]) {
+            measureIndex = 1;
+            lineIndex = 0;
         }
+
+        // Map the data and generate selectionIds
+        let data: DataPoint[] = dataSource.categories[0].values.map((e, i) => {
+            return {
+                "bucket": e,
+                "measure": <number> dataSource.values[measureIndex].values[i],
+                "line": <number> dataSource.values[lineIndex].values[i],
+                "selectionId": this.host.createSelectionIdBuilder()
+                    .withCategory(dataSource.categories[0], i)
+                    .createSelectionId()
+            }
+        });
 
         // X axis scaler
         let x = d3.scaleBand()
             .range([0, width])
-            .domain(data.map(x => String(x[this.dataIndex.bucket])))
+            .domain(data.map(x => String(x.bucket)))
             .padding(0.2);
         // X axis
         this.container.append("g")
@@ -126,7 +125,7 @@ export class Visual implements IVisual {
         // Generate new entries when required
         bars.enter()
             .append("rect")
-                .attr("x", d => { return x(String(d[this.dataIndex.bucket])) })
+                .attr("x", d => { return x(String(d.bucket)) })
                 .attr("width", x.bandwidth())
                 // Zero out height to being with
                 .attr("y", d => { return y(0) })
@@ -141,19 +140,17 @@ export class Visual implements IVisual {
             // .transition()
             // .duration(100)
             // .delay((d, i) => { return (i*100) })
-            .attr("fill", d => { return d[this.dataIndex.measure] >= d[this.dataIndex.line] ? this.colour.positive : this.colour.negative })
-            .attr("x", d => { return x(String(d[this.dataIndex.bucket])) })
+            .attr("fill", d => { return (<DataPoint> d).measure >= (<DataPoint> d).line ? this.colour.positive : this.colour.negative })
+            .attr("x", d => { return x(String((<DataPoint> d).bucket)) })
             .attr("width", x.bandwidth())
-            .attr("y", d => { return d[this.dataIndex.measure] > d[this.dataIndex.line] ? y(d[this.dataIndex.measure]) : y(d[this.dataIndex.line]) })
-            .attr("height",d => { return height - y(Math.abs(d[this.dataIndex.line] - d[this.dataIndex.measure])) });
+            .attr("y", d => { return (<DataPoint> d).measure > (<DataPoint> d).line ? y((<DataPoint> d).measure) : y((<DataPoint> d).line) })
+            .attr("height",d => { return height - y(Math.abs((<DataPoint> d).line - (<DataPoint> d).measure)) });
     }
 }
 
-// Data is passed in as an array of data points (arrays)
-// The indexing of each datapoint is stored here
-// ref: https://docs.microsoft.com/en-au/power-bi/developer/visuals/dataview-mappings#table-data-mapping
-interface DataIndex {
+interface DataPoint {
+    bucket: any,
     measure: number,
-    bucket: number,
-    line: number
+    line: number,
+    selectionId: ISelectionId
 }

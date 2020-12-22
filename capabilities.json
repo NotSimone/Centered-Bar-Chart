@@ -35,25 +35,18 @@
                     "line": { "max": 1, "min": 1}
                 }
             ],
-            "table": {
-                "rows": {
-                    "select": [
-                        {
-                            "for": {
-                                "in": "bucket"
-                            }
-                        },
-                        {
-                            "for": {
-                                "in": "measure"
-                            }
-                        },
-                        {
-                            "for": {
-                                "in": "line"
-                            }
-                        }
-                    ]
+            "categorical": {
+                "categories": {
+                    "for": { "in": "bucket"}
+                },
+                "values": {
+                    "group": {
+                        "by": "grouping",
+                        "select": [
+                            { "bind": { "to": "measure" } },
+                            { "bind": { "to": "line" } }
+                        ]
+                    }
                 }
             }
         }
