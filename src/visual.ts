@@ -31,12 +31,13 @@ import powerbi from "powerbi-visuals-api";
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 import ISelectionManager = powerbi.extensibility.ISelectionManager;
+import ISelectionId = powerbi.extensibility.ISelectionId;
 import IVisual = powerbi.extensibility.visual.IVisual;
 import EnumerateVisualObjectInstancesOptions = powerbi.EnumerateVisualObjectInstancesOptions;
 import VisualObjectInstance = powerbi.VisualObjectInstance;
 import DataView = powerbi.DataView;
 import VisualObjectInstanceEnumerationObject = powerbi.VisualObjectInstanceEnumerationObject;
-import IVisualHost = powerbi.extensibility.IVisualHost;
+import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 import * as d3 from "d3";
 import { CountableTimeInterval, keys } from "d3";
 type Selection<T extends d3.BaseType> = d3.Selection<T, any, any, any>;
@@ -75,7 +76,7 @@ export class Visual implements IVisual {
 
         // Setup selector
         options.dataViews[0].table.rows.forEach((row: powerbi.DataViewTableRow, rowIndex: number) => {
-            const selection: powerbi.visuals.ISelectionId = this.host.ISelectionIdBuilder()
+            this.host.createSelectionIdBuilder()
                 .withTable(options.dataViews[0].table, rowIndex)
                 .createSelectionId();
         });
