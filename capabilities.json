@@ -50,5 +50,41 @@
                 }
             }
         }
-    ]
+    ],
+    "objects": {
+        "chartSettings": {
+            "displayName": "Chart Settings",
+            "properties": {
+                "toggle": {
+                    "displayName": "Toggle",
+                    "type": {
+                        "bool": true
+                    }
+                }
+            }
+        },
+        "axisScaling": {
+            "displayName": "Override Axis Scaling",
+            "properties": {
+                "show": {
+                    "displayName": "Show",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "lower": {
+                    "displayName": "Lower Limit",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "upper": {
+                    "displayName": "Upper Limit",
+                    "type": {
+                        "numeric": true
+                    }
+                }
+            }
+        }
+    }
 }

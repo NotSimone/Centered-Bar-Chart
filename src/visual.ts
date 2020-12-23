@@ -41,7 +41,7 @@ import VisualObjectInstanceEnumerationObject = powerbi.VisualObjectInstanceEnume
 import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 type Selection<T extends d3.BaseType> = d3.Selection<T, any, any, any>;
 
-import { dataRoleHelper } from "powerbi-visuals-utils-dataviewutils";
+import { dataViewObjects } from "powerbi-visuals-utils-dataviewutils";
 
 export class Visual implements IVisual {
     // PBI interactions
@@ -65,10 +65,29 @@ export class Visual implements IVisual {
     private x: any;
     private y: any;
 
-    private selectedBarId: ISelectionId;
     private data: DataPoint[];
 
-    private settings = { toggle: false };
+    private settings = { 
+        toggle: {
+            default: false,
+            value: false
+        },
+        axisScaling: {
+            // Enable axis scale override
+            enabled: {
+                default: false,
+                value: false
+            },
+            lower: {
+                default: 0,
+                value: 0
+            },
+            upper: {
+                default: 2,
+                value: 2
+            }
+        }
+    };
 
     constructor(options: VisualConstructorOptions) {
         this.host = options.host;
@@ -86,18 +105,46 @@ export class Visual implements IVisual {
         let objectEnumeration: VisualObjectInstance[] = [];
 
         switch(objectName) {
-            case "Chart Settings":
+            case "chartSettings":
                 objectEnumeration.push({
                     objectName: objectName,
                     properties: {
-                        toggle: this.settings.toggle
+                        toggle: this.settings.toggle.value
                     },
                     selector: null
                 });
                 break;
+            case "axisScaling":
+                objectEnumeration.push({
+                    objectName: objectName,
+                    properties: {
+                        toggle: this.settings.toggle.value
+                    },
+                    selector: null
+                });
+                break; 
         };
     
         return objectEnumeration;
+    }
+
+    /**
+     * Update settings
+     * @param options 
+     */
+    private updateSettings(options: VisualUpdateOptions) {
+        this.settings.toggle.value = dataViewObjects.getValue(
+            options.dataViews[0].metadata.objects, {
+                objectName: "chartSettings",
+                propertyName: "toggle"
+            },
+            this.settings.toggle.default);
+        this.settings.axisScaling.enabled.value = dataViewObjects.getValue(
+            options.dataViews[0].metadata.objects, {
+                objectName: "axisScaling",
+                propertyName: "show"
+            },
+            this.settings.axisScaling.enabled.default);
     }
 
     /**
@@ -105,6 +152,9 @@ export class Visual implements IVisual {
      * @param options 
      */
     public update(options: VisualUpdateOptions) {
+        // Update settings
+        this.updateSettings(options);
+
         // Refetch data
         this.fetchData(options);
 
@@ -126,14 +176,7 @@ export class Visual implements IVisual {
             .on("click", d => {
                 // Allow selection only if the visual is rendered in a view that supports interactivity (e.g. Report)
                 if (this.host.allowInteractions) {
-                    // Clear or select the bar
-                    if (this.selectedBarId == d.selectionId) {
-                        this.selectionManager.clear();
-                        this.selectedBarId = null;
-                    } else {
-                        this.selectionManager.select(d.selectionId);
-                        this.selectedBarId = d.selectionId;
-                    }                    
+                    this.selectionManager.select(d.selectionId);
                     this.redraw(options);
                 }
             });
@@ -225,11 +268,13 @@ export class Visual implements IVisual {
         // Scale transition time based on the count so the total animation time is constant
         let count = bars.size();
 
+        let currentlySelected = this.selectionManager.getSelectionIds();
+
         bars.transition()
             .duration(3000/count)
             .delay((d, i) => { return (i*1000/count) })
             .attr("fill", d => { return (<DataPoint> d).measure >= (<DataPoint> d).line ? this.colour.positive : this.colour.negative })
-            .attr("fill-opacity", d => { return (<DataPoint> d).selectionId === this.selectedBarId || this.selectedBarId == null ? 1 : 0.4 })
+            .attr("fill-opacity", d => { return currentlySelected.indexOf((<DataPoint> d).selectionId) > -1 || currentlySelected.length == 0 ? 1 : 0.4 })
             .attr("x", d => { return this.x(String((<DataPoint> d).bucket)) })
             .attr("width", this.x.bandwidth())
             .attr("y", d => { return (<DataPoint> d).measure > (<DataPoint> d).line ? this.y((<DataPoint> d).measure) : this.y((<DataPoint> d).line) })
