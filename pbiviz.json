@@ -5,19 +5,19 @@
         "guid": "centeredBarChartC7EC6262591F45CC9716F0A0D9084492",
         "visualClassName": "Visual",
         "version": "1.0.0",
-        "description": "",
-        "supportUrl": "",
+        "description": "Bar chart growing from a specified line",
+        "supportUrl": "simon.hua@lionco.com",
         "gitHubUrl": ""
     },
     "apiVersion": "3.4.0",
     "author": {
-        "name": "",
-        "email": ""
+        "name": "Simon",
+        "email": "simon.hua@lionco.com"
     },
     "assets": {
         "icon": "assets/icon.png"
     },
-    "externalJS": null,
+    "externalJS": [],
     "style": "style/visual.less",
     "capabilities": "capabilities.json",
     "dependencies": null,

@@ -1,0 +1,17 @@
+{
+    "version": "1.0.0",
+    "author": {"name":"Simon","email":"simon.hua@lionco.com"},
+    "resources": [
+        {
+            "resourceId": "rId0",
+            "sourceType": 5,
+            "file": "resources/centeredBarChartC7EC6262591F45CC9716F0A0D9084492.pbiviz.json"
+        }
+    ],
+    "visual": {"name":"centeredBarChart","displayName":"CenteredBarChart","guid":"centeredBarChartC7EC6262591F45CC9716F0A0D9084492","visualClassName":"Visual","version":"1.0.0","description":"Bar chart growing from a specified line","supportUrl":"simon.hua@lionco.com","gitHubUrl":""},
+    "metadata": {
+        "pbivizjson": {
+            "resourceId": "rId0"
+        }
+    }  
+}

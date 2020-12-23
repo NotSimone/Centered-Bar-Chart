@@ -26,8 +26,9 @@
 "use strict";
 
 import "core-js/stable";
-import "./../style/visual.less";
+import * as d3 from "d3";
 import powerbi from "powerbi-visuals-api";
+import "./../style/visual.less";
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 import ISelectionManager = powerbi.extensibility.ISelectionManager;
@@ -35,19 +36,39 @@ import ISelectionId = powerbi.extensibility.ISelectionId;
 import IVisual = powerbi.extensibility.visual.IVisual;
 import EnumerateVisualObjectInstancesOptions = powerbi.EnumerateVisualObjectInstancesOptions;
 import VisualObjectInstance = powerbi.VisualObjectInstance;
+import VisualObjectInstanceEnumeration = powerbi.VisualObjectInstanceEnumeration;
 import VisualObjectInstanceEnumerationObject = powerbi.VisualObjectInstanceEnumerationObject;
 import IVisualHost = powerbi.extensibility.visual.IVisualHost;
-import * as d3 from "d3";
-import { CountableTimeInterval, keys } from "d3";
 type Selection<T extends d3.BaseType> = d3.Selection<T, any, any, any>;
 
+import { dataRoleHelper } from "powerbi-visuals-utils-dataviewutils";
+
 export class Visual implements IVisual {
+    // PBI interactions
     private host: IVisualHost;
     private selectionManager: ISelectionManager;
+
+    // HTML element
     private svg: Selection<SVGElement>;
     private container: Selection<SVGElement>;
+
+    // Configuration
     private margin = { top:10, right:30, bottom:90, left:40 };
     private colour = { positive: "green", negative: "red" };
+
+    // Current settings
+    private containerWidth: number = null;
+    private containerHeight: number = null;
+
+    // Axis scalers
+    // ref: https://github.com/d3/d3-scale
+    private x: any;
+    private y: any;
+
+    private selectedBarId: ISelectionId;
+    private data: DataPoint[];
+
+    private settings = { toggle: false };
 
     constructor(options: VisualConstructorOptions) {
         this.host = options.host;
@@ -57,25 +78,83 @@ export class Visual implements IVisual {
         this.container = this.svg.append("g");
     }
 
+    /**
+     * Called by PowerBi to handle chart properties
+     */
+    public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstanceEnumeration {
+        let objectName: string = options.objectName;
+        let objectEnumeration: VisualObjectInstance[] = [];
+
+        switch(objectName) {
+            case "Chart Settings":
+                objectEnumeration.push({
+                    objectName: objectName,
+                    properties: {
+                        toggle: this.settings.toggle
+                    },
+                    selector: null
+                });
+                break;
+        };
+    
+        return objectEnumeration;
+    }
+
+    /**
+     * Called by PowerBi whenever the chart is updated
+     * @param options 
+     */
     public update(options: VisualUpdateOptions) {
-        // Remove the axes
-        this.container.selectAll(".axis").remove();
+        // Refetch data
+        this.fetchData(options);
 
-        // Set the height of the whole chart
-        let width: number = options.viewport.width;
-        let height: number = options.viewport.height;
-        this.svg.attr("width", width);
-        this.svg.attr("height", height);
+        // Reisze the container and regenerate the axes
+        this.resize(options);
 
-        // Now set up the size of the container
-        width = width - this.margin.left - this.margin.right;
-        height = height - this.margin.top - this.margin.bottom;
-        this.container.attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+        // Update the bars
+        // Binds data
+        let bars = this.container.selectAll("rect")
+            .data(this.data);
 
+        // Configure the generation of bars
+        bars.enter()
+            .append("rect")
+                .attr("x", d => { return this.x(String((<DataPoint> d).bucket)) })
+                .attr("width", this.x.bandwidth())
+                .attr("y", d => { return this.y((<DataPoint> d).line) })
+                .attr("height", 0 )
+            .on("click", d => {
+                // Allow selection only if the visual is rendered in a view that supports interactivity (e.g. Report)
+                if (this.host.allowInteractions) {
+                    // Clear or select the bar
+                    if (this.selectedBarId == d.selectionId) {
+                        this.selectionManager.clear();
+                        this.selectedBarId = null;
+                    } else {
+                        this.selectionManager.select(d.selectionId);
+                        this.selectedBarId = d.selectionId;
+                    }                    
+                    this.redraw(options);
+                }
+            });
+        // Remove entries when no longer needed
+        bars.exit()
+            .remove();
+
+        this.redraw(options);
+    }
+
+
+    /**
+     * Refreshes data store
+     * @param options 
+     */
+    private fetchData(options: VisualUpdateOptions) {
         // Get the data
         let dataSource: powerbi.DataViewCategorical = options.dataViews[0].categorical;
 
         // Look for the indexes where the value and line reside
+        // NOTE: If ever new fields are added, this must be changed
         let measureIndex = 0;
         let lineIndex = 1;
         if (!dataSource.values[0].source.roles["measure"]) {
@@ -84,7 +163,7 @@ export class Visual implements IVisual {
         }
 
         // Map the data and generate selectionIds
-        let data: DataPoint[] = dataSource.categories[0].values.map((e, i) => {
+        this.data = dataSource.categories[0].values.map((e, i) => {
             return {
                 "bucket": e,
                 "measure": <number> dataSource.values[measureIndex].values[i],
@@ -94,57 +173,67 @@ export class Visual implements IVisual {
                     .createSelectionId()
             }
         });
+    }
+
+    /**
+     *  Resize the container and generate the axes
+     */
+    private resize(options: VisualUpdateOptions) {
+        let width: number = options.viewport.width;
+        let height: number = options.viewport.height;
+        this.containerWidth = width - this.margin.left - this.margin.right;
+        this.containerHeight = height - this.margin.top - this.margin.bottom;
+
+        // Resize the svg and container
+        this.svg.attr("width", width);
+        this.svg.attr("height", height);
+        this.container.attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+
+        // Regenerate the axes
+        this.container.selectAll(".axis").remove();
 
         // X axis scaler
-        let x = d3.scaleBand()
-            .range([0, width])
-            .domain(data.map(x => String(x.bucket)))
+        this.x = d3.scaleBand()
+            .range([0, this.containerWidth])
+            .domain(this.data.map(d => String(d.bucket)))
             .padding(0.2);
         // X axis
         this.container.append("g")
             .attr("class", "axis")
-            .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(x))
+            .attr("transform", "translate(0," + this.containerHeight + ")")
+            .call(d3.axisBottom(this.x))
             .selectAll("text")
                 .attr("transform", "translate(-10,0)rotate(-45)")
                 .style("text-anchor", "end");
 
         // Y axis scaler
-        let y = d3.scaleLinear()
-            .range([height, 0])
+        this.y = d3.scaleLinear()
+            .range([this.containerHeight, 0])
             .domain([0, 2]);
         // Y axis
         this.container.append("g")
-            .call(d3.axisLeft(y))
+            .call(d3.axisLeft(this.y))
             .attr("class", "axis");
+    }
 
-        // Bars
-        // Binds data
-        let bars = this.container.selectAll("rect")
-            .data(data);
-        // Generate new entries when required
-        bars.enter()
-            .append("rect")
-                .attr("x", d => { return x(String(d.bucket)) })
-                .attr("width", x.bandwidth())
-                // Zero out height to being with
-                .attr("y", d => { return y(0) })
-                .attr("height", d => { return height - y(0) });
-        // Remove entries when no longer needed
-        bars.exit()
-            .remove();
+    /**
+     * Redraw the bars
+     * @param options 
+     */
+    private redraw(options: VisualUpdateOptions) {
+        let bars = this.container.selectAll("rect");
+        // Scale transition time based on the count so the total animation time is constant
+        let count = bars.size();
 
-        // Animate changes in the bars
-        // This also handles data refreshing
-        this.container.selectAll("rect")
-            // .transition()
-            // .duration(100)
-            // .delay((d, i) => { return (i*100) })
+        bars.transition()
+            .duration(3000/count)
+            .delay((d, i) => { return (i*1000/count) })
             .attr("fill", d => { return (<DataPoint> d).measure >= (<DataPoint> d).line ? this.colour.positive : this.colour.negative })
-            .attr("x", d => { return x(String((<DataPoint> d).bucket)) })
-            .attr("width", x.bandwidth())
-            .attr("y", d => { return (<DataPoint> d).measure > (<DataPoint> d).line ? y((<DataPoint> d).measure) : y((<DataPoint> d).line) })
-            .attr("height",d => { return height - y(Math.abs((<DataPoint> d).line - (<DataPoint> d).measure)) });
+            .attr("fill-opacity", d => { return (<DataPoint> d).selectionId === this.selectedBarId || this.selectedBarId == null ? 1 : 0.4 })
+            .attr("x", d => { return this.x(String((<DataPoint> d).bucket)) })
+            .attr("width", this.x.bandwidth())
+            .attr("y", d => { return (<DataPoint> d).measure > (<DataPoint> d).line ? this.y((<DataPoint> d).measure) : this.y((<DataPoint> d).line) })
+            .attr("height", d => { return this.containerHeight - this.y(Math.abs((<DataPoint> d).line - (<DataPoint> d).measure)) });
     }
 }
 

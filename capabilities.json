@@ -1,11 +1,6 @@
 {
     "dataRoles": [
         {
-            "displayName": "Buckets",
-            "name": "bucket",
-            "kind": "Grouping"
-        },
-        {
             "displayName": "Measure Data",
             "name": "measure",
             "kind": "Measure",
@@ -24,20 +19,25 @@
                     "numeric": true
                 }
             ]
+        },
+        {
+            "displayName": "Dates",
+            "name": "date",
+            "kind": "Grouping"
         }
     ],
     "dataViewMappings": [
         {
             "conditions": [
                 {
-                    "bucket": { "max": 1, "min": 1 },
-                    "measure": { "max": 1, "min": 1 },
-                    "line": { "max": 1, "min": 1}
+                    "measure": { "max": 1 },
+                    "line": { "max": 1 },
+                    "date": { "max": 1 }
                 }
             ],
             "categorical": {
                 "categories": {
-                    "for": { "in": "bucket"}
+                    "for": { "in": "date"}
                 },
                 "values": {
                     "group": {
