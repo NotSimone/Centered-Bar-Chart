@@ -8,7 +8,7 @@
             "file": "resources/centeredBarChartC7EC6262591F45CC9716F0A0D9084492.pbiviz.json"
         }
     ],
-    "visual": {"name":"centeredBarChart","displayName":"CenteredBarChart","guid":"centeredBarChartC7EC6262591F45CC9716F0A0D9084492","visualClassName":"Visual","version":"1.0.0","description":"Bar chart growing from a specified line","supportUrl":"simon.hua@lionco.com","gitHubUrl":""},
+    "visual": {"name":"centeredBarChart","displayName":"CenteredBarChart","guid":"centeredBarChartC7EC6262591F45CC9716F0A0D9084492","visualClassName":"Visual","version":"1.0.0","description":"Bar chart growing from a specified line","supportUrl":"simon.hua@lionco.com","gitHubUrl":"https://github.com/NotSimone/Centered-Bar-Chart"},
     "metadata": {
         "pbivizjson": {
             "resourceId": "rId0"
