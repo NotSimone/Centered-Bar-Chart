@@ -85,6 +85,23 @@
                     }
                 }
             }
+        },
+        "tickFormat": {
+            "displayName": "Tick Formatting",
+            "properties": {
+                "x": {
+                    "displayName": "X-Axis",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "y": {
+                    "displayName": "Y-Axis",
+                    "type": {
+                        "text": true
+                    }
+                }
+            }
         }
     }
 }
