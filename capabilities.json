@@ -21,8 +21,8 @@
             ]
         },
         {
-            "displayName": "Dates",
-            "name": "date",
+            "displayName": "Buckets",
+            "name": "buckets",
             "kind": "Grouping"
         }
     ],
@@ -32,12 +32,12 @@
                 {
                     "measure": { "max": 1 },
                     "line": { "max": 1 },
-                    "date": { "max": 1 }
+                    "buckets": { "max": 1 }
                 }
             ],
             "categorical": {
                 "categories": {
-                    "for": { "in": "date"}
+                    "for": { "in": "buckets"}
                 },
                 "values": {
                     "group": {
@@ -52,11 +52,11 @@
         }
     ],
     "objects": {
-        "chartSettings": {
-            "displayName": "Chart Settings",
+        "invertColours": {
+            "displayName": "Invert Colours",
             "properties": {
-                "toggle": {
-                    "displayName": "Toggle",
+                "show": {
+                    "displayName": "Show",
                     "type": {
                         "bool": true
                     }
@@ -64,7 +64,8 @@
             }
         },
         "axisScaling": {
-            "displayName": "Override Axis Scaling",
+            "displayName": "Y-Axis Scaling",
+            "description": "Override default y-axis scaling (+/- 20% of the range).",
             "properties": {
                 "show": {
                     "displayName": "Show",
@@ -88,7 +89,14 @@
         },
         "tickFormat": {
             "displayName": "Tick Formatting",
+            "description": "Use custom formatting for the ticks.\n\nRef: https://github.com/d3/d3-format#locale_format.\nhttps://github.com/d3/d3-time-format#locale_format (for dates).",
             "properties": {
+                "show": {
+                    "displayName": "Show",
+                    "type": {
+                        "bool": true
+                    }
+                },
                 "x": {
                     "displayName": "X-Axis",
                     "type": {
@@ -99,6 +107,12 @@
                     "displayName": "Y-Axis",
                     "type": {
                         "text": true
+                    }
+                },
+                "bucketIsDate": {
+                    "displayName": "Buckets are Dates",
+                    "type": {
+                        "bool": true
                     }
                 }
             }
