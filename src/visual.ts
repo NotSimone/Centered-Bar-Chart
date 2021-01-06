@@ -163,7 +163,47 @@ export class Visual implements IVisual {
     private renderTooltip() {
         this.tooltipServiceWrapper.addTooltip(
             this.container.selectAll("rect"),
-            (tooltipEvent: DataPoint) => { return tooltipEvent.tooltipInfo; },
+            (tooltipEvent: DataPoint) => {
+                let measure: string|number = tooltipEvent.measure;
+                let target: string|number = tooltipEvent.target;
+                let bucket: string|number|Date = tooltipEvent.bucket;
+                let difference: string|number = (this.settings.tooltipFormat && this.settings.tooltipFormat.invertDifference) ? target - measure : measure - target;
+
+                // Format the tooltips based on the settings
+                if (this.settings.tooltipFormat.show) {
+                    if (this.settings.tooltipFormat.measure !== "") measure = d3.format(this.settings.tooltipFormat.measure)(measure);
+                    if (this.settings.tooltipFormat.target !== "") target = d3.format(this.settings.tooltipFormat.target)(target);
+                    if (this.settings.tooltipFormat.difference !== "") difference = d3.format(this.settings.tooltipFormat.difference)(difference);
+                    if (this.settings.bucketIsDate.show) {
+                        if (this.settings.tooltipFormat.bucket === "") {
+                            bucket = d3.timeFormat("%A %d/%m/%y")(<Date> bucket);
+                        } else {
+                            bucket = d3.timeFormat(this.settings.tooltipFormat.bucket)(<Date> bucket);
+                        }
+                    } else {
+                        bucket = d3.format(this.settings.tooltipFormat.bucket)(<number> bucket);
+                    }
+                }
+
+                return [
+                    {
+                        displayName: "Measure",
+                        value: measure.toString()
+                    },
+                    {
+                        displayName: "Target",
+                        value: target.toString()
+                    },
+                    {
+                        displayName: "Difference",
+                        value: difference.toString()
+                    },
+                    {
+                        displayName: "Bucket",
+                        value: bucket.toString()
+                    }
+                ];
+            },
             (tooltipEvent: DataPoint) => { return tooltipEvent.selectionId; })
     }
 
@@ -186,7 +226,7 @@ export class Visual implements IVisual {
 
         // Map the data and generate selectionIds
         let temp = dataSource.categories[0].values.map((e, i) => {
-            let bucket = (this.settings.tickFormat.show && this.settings.tickFormat.bucketIsDate) ? Date.parse(<string> e) : e;
+            let bucket = (this.settings.bucketIsDate.show) ? Date.parse(<string> e) : e;
             let measure = <number> dataSource.values[measureIndex].values[i];
             let target = <number> dataSource.values[targetIndex].values[i];
             let selectionId = this.host.createSelectionIdBuilder()
@@ -196,21 +236,7 @@ export class Visual implements IVisual {
                 bucket: bucket,
                 measure: measure,
                 target: target,
-                selectionId: selectionId,
-                tooltipInfo: [
-                    {
-                        displayName: "Bucket",
-                        value: bucket.toString()
-                    },
-                    {
-                        displayName: "Value",
-                        value: measure.toString()
-                    },
-                    {
-                        displayName: "Target",
-                        value: target.toString()
-                    }
-                ]
+                selectionId: selectionId
             }
         });
 
@@ -252,7 +278,7 @@ export class Visual implements IVisual {
         let xAxis = d3.axisBottom(this.x);
         if (this.settings.tickFormat.show) {
             // Different formatters for numbers and dates
-            if (this.settings.tickFormat.bucketIsDate) {
+            if (this.settings.bucketIsDate.show) {
                 if (this.settings.tickFormat.x === "")
                     xAxis.tickFormat(d3.timeFormat("%d/%m"));
                 else
@@ -329,10 +355,9 @@ export class Visual implements IVisual {
     }
 }
 
-interface DataPoint extends TooltipEnabledDataPoint {
+interface DataPoint {
     bucket: any,
     measure: number,
     target: number,
     selectionId: ISelectionId
-    tooltipInfo: VisualTooltipDataItem[]
 }

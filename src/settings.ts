@@ -7,6 +7,8 @@ export class Settings extends dataViewObjectsParser.DataViewObjectsParser {
     public invertColours: InvertColours = new InvertColours();
     public axisScaling: AxisScaling = new AxisScaling();
     public tickFormat: TickFormat = new TickFormat();
+    public tooltipFormat: TooltipFormat = new TooltipFormat();
+    public bucketIsDate: BucketIsDate = new BucketIsDate();
 }
 
 export class InvertColours {
@@ -22,6 +24,18 @@ export class AxisScaling {
 export class TickFormat {
     public show: boolean = false;
     public x: string = "";
-    public y: string = "";
-    public bucketIsDate: boolean = false;
+    public y: string = "~%";
+}
+
+export class TooltipFormat {
+    public show: boolean = false;
+    public measure: string = "~%";
+    public target: string = "~%";
+    public difference: string = "~%";
+    public invertDifference: boolean = false;
+    public bucket: string = "";
+}
+
+export class BucketIsDate {
+    public show: boolean = false;
 }

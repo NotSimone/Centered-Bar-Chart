@@ -22,7 +22,7 @@
         },
         {
             "displayName": "Buckets",
-            "name": "buckets",
+            "name": "bucket",
             "kind": "Grouping"
         }
     ],
@@ -32,12 +32,12 @@
                 {
                     "measure": { "max": 1 },
                     "target": { "max": 1 },
-                    "buckets": { "max": 1 }
+                    "bucket": { "max": 1 }
                 }
             ],
             "categorical": {
                 "categories": {
-                    "for": { "in": "buckets"}
+                    "for": { "in": "bucket"}
                 },
                 "values": {
                     "group": {
@@ -87,6 +87,18 @@
                 }
             }
         },
+        "bucketIsDate": {
+            "displayName": "Bucket is Date",
+            "description": "Enable if the buckets are dates (used for formatting)",
+            "properties": {
+                "show": {
+                    "displayName": "Buckets are Dates",
+                    "type": {
+                        "bool": true
+                    }
+                }
+            }
+        },
         "tickFormat": {
             "displayName": "Tick Formatting",
             "description": "Use custom formatting for the ticks.\n\nRef: https://github.com/d3/d3-format#locale_format.\nhttps://github.com/d3/d3-time-format#locale_format (for dates).",
@@ -98,21 +110,57 @@
                     }
                 },
                 "x": {
-                    "displayName": "X-Axis",
+                    "displayName": "X-Axis Tick Format",
                     "type": {
                         "text": true
                     }
                 },
                 "y": {
-                    "displayName": "Y-Axis",
+                    "displayName": "Y-Axis Tick Format",
+                    "type": {
+                        "text": true
+                    }
+                }
+            }
+        },
+        "tooltipFormat": {
+            "displayName": "Tooltip Formatting",
+            "description": "Use custom formatting for the tooltips.\n\nRef: https://github.com/d3/d3-format#locale_format.\nhttps://github.com/d3/d3-time-format#locale_format (for dates).",
+            "properties": {
+                "show": {
+                    "displayName": "Show",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "measure": {
+                    "displayName": "Measure Format",
                     "type": {
                         "text": true
                     }
                 },
-                "bucketIsDate": {
-                    "displayName": "Buckets are Dates",
+                "target": {
+                    "displayName": "Target Format",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "difference": {
+                    "displayName": "Difference Format",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "invertDifference": {
+                    "displayName": "Invert Difference Value",
                     "type": {
                         "bool": true
+                    }
+                },
+                "bucket": {
+                    "displayName": "Bucket Format",
+                    "type": {
+                        "text": true
                     }
                 }
             }
