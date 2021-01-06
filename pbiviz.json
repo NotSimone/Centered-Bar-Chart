@@ -1,13 +1,13 @@
 {
     "visual": {
-        "name": "centeredBarChart",
-        "displayName": "CenteredBarChart",
-        "guid": "centeredBarChartC7EC6262591F45CC9716F0A0D9084492",
+        "name": "targetBarChart",
+        "displayName": "Target Bar Chart",
+        "guid": "targetBarChartC7EC6262591F45CC9716F0A0D9084492",
         "visualClassName": "Visual",
-        "version": "1.0.0",
-        "description": "Bar chart growing from a specified line",
+        "version": "1.1.0",
+        "description": "Bar chart growing from a target",
         "supportUrl": "simon.hua@lionco.com",
-        "gitHubUrl": "https://github.com/NotSimone/Centered-Bar-Chart"
+        "gitHubUrl": "https://github.com/NotSimone/Target-Bar-Chart"
     },
     "apiVersion": "3.4.0",
     "author": {

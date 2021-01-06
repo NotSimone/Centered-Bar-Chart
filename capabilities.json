@@ -11,8 +11,8 @@
             ]
         },
         {
-            "displayName": "Line Values",
-            "name": "line",
+            "displayName": "Target Values",
+            "name": "target",
             "kind": "Measure",
             "requiredTypes": [
                 {
@@ -31,7 +31,7 @@
             "conditions": [
                 {
                     "measure": { "max": 1 },
-                    "line": { "max": 1 },
+                    "target": { "max": 1 },
                     "buckets": { "max": 1 }
                 }
             ],
@@ -44,7 +44,7 @@
                         "by": "grouping",
                         "select": [
                             { "bind": { "to": "measure" } },
-                            { "bind": { "to": "line" } }
+                            { "bind": { "to": "target" } }
                         ]
                     }
                 }

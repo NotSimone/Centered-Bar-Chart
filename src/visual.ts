@@ -136,7 +136,7 @@ export class Visual implements IVisual {
             .append("rect")
                 .attr("x", (d) => { return this.x(String((<DataPoint> d).bucket)) })
                 .attr("width", this.x.bandwidth())
-                .attr("y", (d) => { return this.y((<DataPoint> d).line) })
+                .attr("y", (d) => { return this.y((<DataPoint> d).target) })
                 .attr("height", 0 )
             .on("click", (d) => {
                 // Allow selection only if the visual is rendered in a view that supports interactivity (e.g. Report)
@@ -175,27 +175,27 @@ export class Visual implements IVisual {
         // Get the data
         let dataSource: powerbi.DataViewCategorical = options.dataViews[0].categorical;
 
-        // Look for the indexes where the value and line reside
+        // Look for the indexes where the value and target reside
         // NOTE: If ever new fields are added, this must be changed
         let measureIndex = 0;
-        let lineIndex = 1;
+        let targetIndex = 1;
         if (!dataSource.values[0].source.roles["measure"]) {
             measureIndex = 1;
-            lineIndex = 0;
+            targetIndex = 0;
         }
 
         // Map the data and generate selectionIds
         let temp = dataSource.categories[0].values.map((e, i) => {
             let bucket = (this.settings.tickFormat.show && this.settings.tickFormat.bucketIsDate) ? Date.parse(<string> e) : e;
             let measure = <number> dataSource.values[measureIndex].values[i];
-            let line = <number> dataSource.values[lineIndex].values[i];
+            let target = <number> dataSource.values[targetIndex].values[i];
             let selectionId = this.host.createSelectionIdBuilder()
                     .withCategory(dataSource.categories[0], i)
                     .createSelectionId();
             return {
                 bucket: bucket,
                 measure: measure,
-                line: line,
+                target: target,
                 selectionId: selectionId,
                 tooltipInfo: [
                     {
@@ -208,7 +208,7 @@ export class Visual implements IVisual {
                     },
                     {
                         displayName: "Target",
-                        value: line.toString()
+                        value: target.toString()
                     }
                 ]
             }
@@ -312,8 +312,8 @@ export class Visual implements IVisual {
 
         // Dont change colours if the only change is a resize
         if (options === null || options.type === VisualUpdateType.Data || options.type === VisualUpdateType.All) {
-            // XOR above/below line classification with invert colour setting
-            transition.attr("fill", (d) => { return ((<DataPoint> d).measure >= (<DataPoint> d).line) !== this.settings.invertColours.show ? this.colour.positive : this.colour.negative })
+            // XOR above/below target classification with invert colour setting
+            transition.attr("fill", (d) => { return ((<DataPoint> d).measure >= (<DataPoint> d).target) !== this.settings.invertColours.show ? this.colour.positive : this.colour.negative })
                 .attr("fill-opacity", (d) => {
                     return currentlySelected.some((e) => (<any> e).key === (<any>(<DataPoint> d).selectionId).key) || currentlySelected.length === 0 ? 1 : 0.4
                 })
@@ -324,15 +324,15 @@ export class Visual implements IVisual {
                 .attr("width", this.x.bandwidth())
                 // y represents the starting point for the bar while height represents how long the bar is (positive only)
                 // As usual for d3, the starting point is from the top and the bar grows downwards
-                .attr("y", (d) => { return (<DataPoint> d).measure > (<DataPoint> d).line ? this.y((<DataPoint> d).measure) : this.y((<DataPoint> d).line) })
-                .attr("height", (d) => { return Math.abs(this.y((<DataPoint> d).line) - this.y((<DataPoint> d).measure)); });
+                .attr("y", (d) => { return (<DataPoint> d).measure > (<DataPoint> d).target ? this.y((<DataPoint> d).measure) : this.y((<DataPoint> d).target) })
+                .attr("height", (d) => { return Math.abs(this.y((<DataPoint> d).target) - this.y((<DataPoint> d).measure)); });
     }
 }
 
 interface DataPoint extends TooltipEnabledDataPoint {
     bucket: any,
     measure: number,
-    line: number,
+    target: number,
     selectionId: ISelectionId
     tooltipInfo: VisualTooltipDataItem[]
 }
