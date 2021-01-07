@@ -81,9 +81,14 @@ export class Visual implements IVisual {
         this.tooltipServiceWrapper = createTooltipServiceWrapper(this.host.tooltipService, options.element);
         this.selectionManager = this.host.createSelectionManager();
         this.svg = d3.select(options.element)
-            .append("svg");
+            .append("svg")
+            .on("click", () => {
+                if (event.defaultPrevented) return;
+    
+                this.selectionManager.clear();
+                this.redraw(null);
+            })
         this.container = this.svg.append("g");
-        
     }
 
     /**
@@ -99,28 +104,8 @@ export class Visual implements IVisual {
      */
     public update(options: VisualUpdateOptions) {
         this.updateSettings(options);
-        switch (options.type) {
-            case VisualUpdateType.Data:
-                this.fetchData(options);
-                break;
-            case VisualUpdateType.Resize:
-                this.resize(options);
-                break;
-            case VisualUpdateType.All:
-                this.updateSettings(options);
-                this.fetchData(options);
-                this.resize(options);
-
-                // Bind deselect click event
-                this.svg.on("click", () => {
-                    if (event.defaultPrevented) return;
-
-                    this.selectionManager.clear();
-                    this.redraw(null);
-                })
-
-                break;
-        }
+        this.fetchData(options);
+        this.resize(options);
 
         this.regenerateAxes();
 
@@ -341,7 +326,7 @@ export class Visual implements IVisual {
             // XOR above/below target classification with invert colour setting
             transition.attr("fill", (d) => { return ((<DataPoint> d).measure >= (<DataPoint> d).target) !== this.settings.invertColours.show ? this.colour.positive : this.colour.negative })
                 .attr("fill-opacity", (d) => {
-                    return currentlySelected.some((e) => (<any> e).key === (<any>(<DataPoint> d).selectionId).key) || currentlySelected.length === 0 ? 1 : 0.4
+                    return currentlySelected.some((e) => ((<any> e).key === (<any>(<DataPoint> d).selectionId).key || currentlySelected.length === 0) ? 1 : 0.4)
                 })
         }
 

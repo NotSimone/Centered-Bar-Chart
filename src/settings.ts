@@ -22,13 +22,13 @@ export class AxisScaling {
 }
 
 export class TickFormat {
-    public show: boolean = false;
+    public show: boolean = true;
     public x: string = "";
     public y: string = "~%";
 }
 
 export class TooltipFormat {
-    public show: boolean = false;
+    public show: boolean = true;
     public measure: string = "~%";
     public target: string = "~%";
     public difference: string = "~%";
