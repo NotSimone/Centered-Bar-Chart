@@ -111,10 +111,8 @@ export class Visual implements IVisual {
 
         // Update the bars
         // Binds data
-        let bars = this.container.selectAll("rect")
+        let bars = this.container.selectAll(".bar")
             .data(this.data);
-
-        let _this = this;
 
         // Configure the generation of bars
         bars.enter()
@@ -123,6 +121,7 @@ export class Visual implements IVisual {
                 .attr("width", this.x.bandwidth())
                 .attr("y", (d) => { return this.y((<DataPoint> d).target) })
                 .attr("height", 0 )
+                .attr("class", "bar")
             .on("click", (d) => {
                 // Allow selection only if the visual is rendered in a view that supports interactivity (e.g. Report)
                 if (this.host.allowInteractions) {
@@ -133,6 +132,21 @@ export class Visual implements IVisual {
             });
         // Remove entries when no longer needed
         bars.exit()
+            .remove();
+
+        // Labels
+        let labels = this.container.selectAll(".label")
+            .data(this.data);
+        
+        labels.enter()
+            .append("text")
+                .attr("x", (d) => { return this.x(String((<DataPoint> d).bucket)) + this.x.bandwidth()/2; })
+                .attr("y", (d) => { return this.y((<DataPoint> d).target); })
+                .attr("class", "label")
+                .style("display", "none")
+                .style("text-anchor", "middle");
+        
+        labels.exit()
             .remove();
 
         this.renderTooltip();
@@ -311,32 +325,54 @@ export class Visual implements IVisual {
      * @param options 
      */
     private redraw(options: VisualUpdateOptions) {
-        let bars = this.container.selectAll("rect");
+        let bars = this.container.selectAll(".bar");
         // Scale transition time based on the count so the total animation time is constant
         let count = bars.size();
 
         let currentlySelected = this.selectionManager.getSelectionIds();
 
-        let transition = bars.transition()
+        let barTransition = bars.transition()
             .duration(3000/count)
             .delay((d, i) => { return (i*1000/count) });
 
         // Dont change colours if the only change is a resize
-        if (options === null || options.type === VisualUpdateType.Data || options.type === VisualUpdateType.All) {
+        if (options === null || options.type !== VisualUpdateType.Resize) {
             // XOR above/below target classification with invert colour setting
-            transition.attr("fill", (d) => { return ((<DataPoint> d).measure >= (<DataPoint> d).target) !== this.settings.invertColours.show ? this.colour.positive : this.colour.negative })
+            barTransition.attr("fill", (d) => { return ((<DataPoint> d).measure >= (<DataPoint> d).target) !== this.settings.invertColours.show ? this.colour.positive : this.colour.negative; })
                 .attr("fill-opacity", (d) => {
-                    return currentlySelected.some((e) => ((<any> e).key === (<any>(<DataPoint> d).selectionId).key || currentlySelected.length === 0) ? 1 : 0.4)
-                })
+                    return currentlySelected.some((e) => { return ((<any> e).key === (<any>(<DataPoint> d).selectionId).key )}) || currentlySelected.length === 0 ? 1 : 0.4; })
         }
 
-        if (options !== null)
-            transition.attr("x", (d) => { return this.x(String((<DataPoint> d).bucket)) })
+        if (options !== null) {
+            // Handle bar size changes/movements
+            barTransition.attr("x", (d) => { return this.x(String((<DataPoint> d).bucket)); })
                 .attr("width", this.x.bandwidth())
                 // y represents the starting point for the bar while height represents how long the bar is (positive only)
                 // As usual for d3, the starting point is from the top and the bar grows downwards
-                .attr("y", (d) => { return (<DataPoint> d).measure > (<DataPoint> d).target ? this.y((<DataPoint> d).measure) : this.y((<DataPoint> d).target) })
+                .attr("y", (d) => { return (<DataPoint> d).measure > (<DataPoint> d).target ? this.y((<DataPoint> d).measure) : this.y((<DataPoint> d).target); })
                 .attr("height", (d) => { return Math.abs(this.y((<DataPoint> d).target) - this.y((<DataPoint> d).measure)); });
+
+            // Handle label rendering
+            if (this.settings.labels.show) {
+                let textTransition = this.container.selectAll(".label").transition()
+                    .duration(3000/count)
+                    .delay((d, i) => { return (i*1000/count) });
+
+                if (this.settings.labels.dynamicScale) {
+                    textTransition.style("textLength", (d) => { return this.x.bandwidth() });
+                    textTransition.style("font-size", null);
+                } else {
+                    textTransition.style("textLength", null);
+                    textTransition.style("font-size", (d) => { return this.x.bandwidth()/3 * this.settings.labels.manualScale + "px"; })
+                }
+
+                textTransition.attr("x", (d) => { return this.x(String((<DataPoint> d).bucket)) + this.x.bandwidth()/2; })
+                    .attr("y", (d) => { return this.y((<DataPoint> d).measure); })
+                    .text((d) => { return d3.format(this.settings.labels.format)((<DataPoint> d).measure); })
+                    .style("dominant-baseline", (d) => { return (<DataPoint> d).measure > (<DataPoint> d).target ? "auto" : "hanging"; })
+                    .style("display", null);
+            }
+        }
     }
 }
 

@@ -9,6 +9,7 @@ export class Settings extends dataViewObjectsParser.DataViewObjectsParser {
     public tickFormat: TickFormat = new TickFormat();
     public tooltipFormat: TooltipFormat = new TooltipFormat();
     public bucketIsDate: BucketIsDate = new BucketIsDate();
+    public labels: Labels = new Labels();
 }
 
 export class InvertColours {
@@ -24,18 +25,25 @@ export class AxisScaling {
 export class TickFormat {
     public show: boolean = true;
     public x: string = "";
-    public y: string = "~%";
+    public y: string = ".0%";
 }
 
 export class TooltipFormat {
     public show: boolean = true;
-    public measure: string = "~%";
-    public target: string = "~%";
-    public difference: string = "~%";
+    public measure: string = ".0%";
+    public target: string = ".0%";
+    public difference: string = ".0%";
     public invertDifference: boolean = false;
     public bucket: string = "";
 }
 
 export class BucketIsDate {
     public show: boolean = false;
+}
+
+export class Labels {
+    public show: boolean = true;
+    public format: string = ".0%";
+    public dynamicScale: boolean = true;
+    public manualScale: number = 1;
 }

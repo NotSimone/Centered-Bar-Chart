@@ -54,6 +54,7 @@
     "objects": {
         "invertColours": {
             "displayName": "Invert Colours",
+            "description": "Inverts the colours for measures above/below the target.",
             "properties": {
                 "show": {
                     "displayName": "Show",
@@ -75,12 +76,14 @@
                 },
                 "lower": {
                     "displayName": "Lower Limit",
+                    "description": "Lowest value in the Y-Axis",
                     "type": {
                         "numeric": true
                     }
                 },
                 "upper": {
                     "displayName": "Upper Limit",
+                    "description": "Highest value in the Y-Axis",
                     "type": {
                         "numeric": true
                     }
@@ -101,7 +104,7 @@
         },
         "tickFormat": {
             "displayName": "Tick Formatting",
-            "description": "Use custom formatting for the ticks.\n\nRef: https://github.com/d3/d3-format#locale_format.\nhttps://github.com/d3/d3-time-format#locale_format (for dates).",
+            "description": "Use custom formatting for the ticks.",
             "properties": {
                 "show": {
                     "displayName": "Show",
@@ -111,6 +114,7 @@
                 },
                 "x": {
                     "displayName": "X-Axis Tick Format",
+                    "description": "Format string for the X-Axis (horizontal) axis.  Requires time-format string if Bucket is Date is selected.\n\nRef: https://github.com/d3/d3-format#locale_format\nhttps://github.com/d3/d3-time-format#locale_format",
                     "type": {
                         "text": true
                     }
@@ -125,7 +129,7 @@
         },
         "tooltipFormat": {
             "displayName": "Tooltip Formatting",
-            "description": "Use custom formatting for the tooltips.\n\nRef: https://github.com/d3/d3-format#locale_format.\nhttps://github.com/d3/d3-time-format#locale_format (for dates).",
+            "description": "Use custom formatting for the tooltips.",
             "properties": {
                 "show": {
                     "displayName": "Show",
@@ -135,32 +139,70 @@
                 },
                 "measure": {
                     "displayName": "Measure Format",
+                    "description": "Format string for the measure tooltip.\n\nRef: https://github.com/d3/d3-format#locale_format",
                     "type": {
                         "text": true
                     }
                 },
                 "target": {
                     "displayName": "Target Format",
+                    "description": "Format string for the target tooltip.\n\nRef: https://github.com/d3/d3-format#locale_format",
                     "type": {
                         "text": true
                     }
                 },
                 "difference": {
                     "displayName": "Difference Format",
+                    "description": "Format string for the difference tooltip.\n\nRef: https://github.com/d3/d3-format#locale_format",
                     "type": {
                         "text": true
                     }
                 },
                 "invertDifference": {
                     "displayName": "Invert Difference Value",
+                    "description": "Invert (+/-) the difference tooltip.",
                     "type": {
                         "bool": true
                     }
                 },
                 "bucket": {
                     "displayName": "Bucket Format",
+                    "description": "Format string for the bucket tooltip. Requires time-format string if Bucket is Date is selected.\n\nRef: https://github.com/d3/d3-format#locale_format\nhttps://github.com/d3/d3-time-format#locale_format",
                     "type": {
                         "text": true
+                    }
+                }
+            }
+        },
+        "labels": {
+            "displayName": "Labels",
+            "description": "Labels for the bars.",
+            "properties": {
+                "show": {
+                    "displayName": "Show",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "format": {
+                    "displayName": "Label Format",
+                    "description": "Format string for the label.\nRef: https://github.com/d3/d3-format#locale_format.",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "dynamicScale": {
+                    "displayName": "Dynamic Scale",
+                    "description": "Enable dynamic scaling of label size.",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "manualScale": {
+                    "displayName": "Manual Scale",
+                    "description": "Manual scaling of label size. Requires Dynamic Scale to be off.",
+                    "type": {
+                        "numeric": true
                     }
                 }
             }
