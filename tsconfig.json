@@ -9,6 +9,7 @@
         "moduleResolution": "node",
         "declaration": true,
         "lib": [
+            "ES2016.Array.Include",
             "es2015",
             "dom"
         ]

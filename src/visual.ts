@@ -341,10 +341,17 @@ export class Visual implements IVisual {
 
         // Dont change colours if the only change is a resize
         if (options === null || options.type !== VisualUpdateType.Resize) {
+            // Highlight only bars that are selected or all of them if none is selected
+
+            // Powerbi is selecting items not on the page for some reason
+            // Iterate through and check that there is at least one of our bars in the selection
+            let highlightIndex: number[] = [];
+            bars.each((d, i) => { if (currentlySelected.some((e) => { return ((<any> e).key === (<any>(<DataPoint> d).selectionId).key )})) highlightIndex.push(i); })
+
             // XOR above/below target classification with invert colour setting
-            barTransition.attr("fill", (d) => { return ((<DataPoint> d).measure >= (<DataPoint> d).target) !== this.settings.invertColours.show ? this.colour.positive : this.colour.negative; })
-                .attr("fill-opacity", (d) => {
-                    return currentlySelected.some((e) => { return ((<any> e).key === (<any>(<DataPoint> d).selectionId).key )}) || currentlySelected.length === 0 ? 1 : 0.4; })
+            barTransition
+                .attr("fill", (d) => { return ((<DataPoint> d).measure >= (<DataPoint> d).target) !== this.settings.invertColours.show ? this.colour.positive : this.colour.negative; })
+                .attr("fill-opacity", (d, i) => { return (highlightIndex.length == 0 || highlightIndex.includes(i)) ? 1 : 0.4; });
         }
 
         if (options !== null) {
