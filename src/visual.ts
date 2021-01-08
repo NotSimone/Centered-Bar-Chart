@@ -57,7 +57,6 @@ export class Visual implements IVisual {
     private container: Selection<SVGElement>;
 
     // Configuration
-    private margin = { top:10, right:30, bottom:90, left:40 };
     private colour = { positive: "green", negative: "red" };
 
     // Current settings
@@ -72,6 +71,8 @@ export class Visual implements IVisual {
     private data: DataPoint[];
     private dataMeasureMax: number;
     private dataMeasureMin: number;
+    private dataTargetMax: number;
+    private dataTargetMin: number;
 
     private settings: Settings = new Settings();
     private tooltipServiceWrapper: ITooltipServiceWrapper;
@@ -241,6 +242,8 @@ export class Visual implements IVisual {
 
         this.dataMeasureMax = <number> dataSource.values[measureIndex].maxLocal;
         this.dataMeasureMin = <number> dataSource.values[measureIndex].minLocal;
+        this.dataTargetMax = <number> dataSource.values[targetIndex].maxLocal;
+        this.dataTargetMin = <number> dataSource.values[targetIndex].minLocal;
 
         // Sort
         this.data = temp.sort((a, b) => { return a.bucket > b.bucket ? 1 : -1 });
@@ -253,13 +256,13 @@ export class Visual implements IVisual {
     private resize(options: VisualUpdateOptions) {
         let width: number = options.viewport.width;
         let height: number = options.viewport.height;
-        this.containerWidth = width - this.margin.left - this.margin.right;
-        this.containerHeight = height - this.margin.top - this.margin.bottom;
+        this.containerWidth = width - this.settings.margins.left - this.settings.margins.right;
+        this.containerHeight = height - this.settings.margins.top - this.settings.margins.bottom;
 
         // Resize the svg and container
         this.svg.attr("width", width);
         this.svg.attr("height", height);
-        this.container.attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+        this.container.attr("transform", "translate(" + this.settings.margins.left + "," + this.settings.margins.top + ")");
     }
 
     /**
@@ -289,8 +292,9 @@ export class Visual implements IVisual {
         }
 
         // Y axis
-        let upper = this.settings.axisScaling.show ? this.settings.axisScaling.upper : this.dataMeasureMax * 1.2;
-        let lower = this.settings.axisScaling.show ? this.settings.axisScaling.lower : this.dataMeasureMin * 0.8;
+        let upper = this.settings.axisScaling.show ? this.settings.axisScaling.upper : Math.max(this.dataMeasureMax * 1.1, this.dataTargetMax * 1.1);
+        let lower = this.settings.axisScaling.show ? this.settings.axisScaling.lower : Math.min(this.dataMeasureMin * 0.9, this.dataTargetMin * 0.9);
+
         this.y = d3.scaleLinear()
             .range([0, this.containerHeight])
             .domain([upper, lower]);

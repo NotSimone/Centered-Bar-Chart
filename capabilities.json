@@ -52,6 +52,36 @@
         }
     ],
     "objects": {
+        "margins": {
+            "displayName": "Margin Size",
+            "description": "Adjust the size of the margins (in px)",
+            "properties": {
+                "top": {
+                    "displayName": "Top",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "right": {
+                    "displayName": "Right",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "bottom": {
+                    "displayName": "Bottom",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "left": {
+                    "displayName": "Left",
+                    "type": {
+                        "numeric": true
+                    }
+                }
+            }
+        },
         "invertColours": {
             "displayName": "Invert Colours",
             "description": "Inverts the colours for measures above/below the target.",
