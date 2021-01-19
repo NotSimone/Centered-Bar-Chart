@@ -31,7 +31,7 @@ export class AxisScaling {
 }
 
 export class TickFormat {
-    public show: boolean = true;
+    public show: boolean = false;
     public x: string = "";
     public y: string = ".0%";
 }

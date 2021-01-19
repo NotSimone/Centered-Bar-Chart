@@ -181,7 +181,8 @@ export class Visual implements IVisual {
                             bucket = d3.timeFormat(this.settings.tooltipFormat.bucket)(<Date> bucket);
                         }
                     } else {
-                        bucket = d3.format(this.settings.tooltipFormat.bucket)(<number> bucket);
+                        if (this.settings.tooltipFormat.bucket !== "")
+                            bucket = d3.format(this.settings.tooltipFormat.bucket)(<number> bucket);
                     }
                 }
 
@@ -292,8 +293,10 @@ export class Visual implements IVisual {
         }
 
         // Y axis
-        let upper = this.settings.axisScaling.show ? this.settings.axisScaling.upper : Math.max(this.dataMeasureMax * 1.1, this.dataTargetMax * 1.1);
-        let lower = this.settings.axisScaling.show ? this.settings.axisScaling.lower : Math.min(this.dataMeasureMin * 0.9, this.dataTargetMin * 0.9);
+        // Lazy way of handing negative values - just try both *0.9 and *1.1 and hit them with the math functions
+        debugger;
+        let upper = this.settings.axisScaling.show ? this.settings.axisScaling.upper : Math.max(this.dataMeasureMax * 0.8, this.dataMeasureMax * 1.2, this.dataTargetMax * 0.8, this.dataTargetMax * 1.2);
+        let lower = this.settings.axisScaling.show ? this.settings.axisScaling.lower : Math.min(this.dataMeasureMin * 0.8, this.dataMeasureMin * 1.2, this.dataTargetMin * 0.8, this.dataTargetMin * 1.2);
 
         this.y = d3.scaleLinear()
             .range([0, this.containerHeight])
@@ -360,11 +363,24 @@ export class Visual implements IVisual {
                 .attr("width", this.x.bandwidth())
                 // y represents the starting point for the bar while height represents how long the bar is (positive only)
                 // As usual for d3, the starting point is from the top and the bar grows downwards
-                .attr("y", (d) => { return (<DataPoint> d).measure > (<DataPoint> d).target ? this.y((<DataPoint> d).measure) : this.y((<DataPoint> d).target); })
-                .attr("height", (d) => { return Math.abs(this.y((<DataPoint> d).target) - this.y((<DataPoint> d).measure)); });
+                .attr("y", (d) => {
+                    let dataPoint: DataPoint = <DataPoint> d;
+                    if (dataPoint.measure === null || dataPoint.target === null || dataPoint.measure <= dataPoint.target)
+                        return this.y(dataPoint.target);
+                    else
+                        return this.y((<DataPoint> d).measure);
+                })
+                .attr("height", (d) => {
+                    let dataPoint: DataPoint = <DataPoint> d;
+                    if (dataPoint.measure === null || dataPoint.target === null)
+                        return 0;
+                    else
+                        return Math.abs(this.y(dataPoint.target) - this.y(dataPoint.measure));
+                });
 
             // Handle label rendering
             if (this.settings.labels.show) {
+                this.container.selectAll(".label").style("display", null);
                 let textTransition = this.container.selectAll(".label").transition()
                     .duration(3000/count)
                     .delay((d, i) => { return (i*1000/count) });
@@ -382,6 +398,8 @@ export class Visual implements IVisual {
                     .text((d) => { return d3.format(this.settings.labels.format)((<DataPoint> d).measure); })
                     .style("dominant-baseline", (d) => { return (<DataPoint> d).measure > (<DataPoint> d).target ? "auto" : "hanging"; })
                     .style("display", null);
+            } else {
+                this.container.selectAll(".label").style("display", "none");
             }
         }
     }
