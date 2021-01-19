@@ -342,65 +342,64 @@ export class Visual implements IVisual {
             .duration(3000/count)
             .delay((d, i) => { return (i*1000/count) });
 
-        // Dont change colours if the only change is a resize
-        if (options === null || options.type !== VisualUpdateType.Resize) {
-            // Highlight only bars that are selected or all of them if none is selected
+        // Highlight only bars that are selected or all of them if none is selected
 
-            // Powerbi is selecting items not on the page for some reason
-            // Iterate through and check that there is at least one of our bars in the selection
-            let highlightIndex: number[] = [];
-            bars.each((d, i) => { if (currentlySelected.some((e) => { return ((<any> e).key === (<any>(<DataPoint> d).selectionId).key )})) highlightIndex.push(i); })
+        // Powerbi is selecting items not on the page for some reason
+        // Iterate through and check that there is at least one of our bars in the selection
+        let highlightIndex: number[] = [];
+        bars.each((d, i) => { if (currentlySelected.some((e) => { return ((<any> e).key === (<any>(<DataPoint> d).selectionId).key )})) highlightIndex.push(i); })
 
-            // XOR above/below target classification with invert colour setting
-            barTransition
-                .attr("fill", (d) => { return ((<DataPoint> d).measure >= (<DataPoint> d).target) !== this.settings.invertColours.show ? this.colour.positive : this.colour.negative; })
-                .attr("fill-opacity", (d, i) => { return (highlightIndex.length == 0 || highlightIndex.includes(i)) ? 1 : 0.4; });
-        }
+        // Handle bar size changes/movements
+        barTransition.attr("x", (d) => { return this.x(String((<DataPoint> d).bucket)); })
+            .attr("width", this.x.bandwidth())
+            // y represents the starting point for the bar while height represents how long the bar is (positive only)
+            // As usual for d3, the starting point is from the top and the bar grows downwards
+            .attr("y", (d) => {
+                let dataPoint: DataPoint = <DataPoint> d;
+                if (dataPoint.measure === null || dataPoint.target === null || dataPoint.measure <= dataPoint.target)
+                    return this.y(dataPoint.target);
+                else
+                    return this.y((<DataPoint> d).measure);
+            })
+            .attr("height", (d) => {
+                let dataPoint: DataPoint = <DataPoint> d;
+                if (dataPoint.measure === null || dataPoint.target === null)
+                    return 0;
+                else
+                    return Math.abs(this.y(dataPoint.target) - this.y(dataPoint.measure));
+            })
+            // Fill
+            .attr("fill", (d) => { return ((<DataPoint> d).measure >= (<DataPoint> d).target) !== this.settings.invertColours.show ? this.colour.positive : this.colour.negative; })
+            .attr("fill-opacity", (d, i) => { return (highlightIndex.length == 0 || highlightIndex.includes(i)) ? 1 : 0.4; });
 
-        if (options !== null) {
-            // Handle bar size changes/movements
-            barTransition.attr("x", (d) => { return this.x(String((<DataPoint> d).bucket)); })
-                .attr("width", this.x.bandwidth())
-                // y represents the starting point for the bar while height represents how long the bar is (positive only)
-                // As usual for d3, the starting point is from the top and the bar grows downwards
-                .attr("y", (d) => {
-                    let dataPoint: DataPoint = <DataPoint> d;
-                    if (dataPoint.measure === null || dataPoint.target === null || dataPoint.measure <= dataPoint.target)
-                        return this.y(dataPoint.target);
-                    else
-                        return this.y((<DataPoint> d).measure);
-                })
-                .attr("height", (d) => {
+        // Handle label rendering
+        if (this.settings.labels.show) {
+            this.container.selectAll(".label").style("display", null);
+            let textTransition = this.container.selectAll(".label").transition()
+                .duration(3000/count)
+                .delay((d, i) => { return (i*1000/count) });
+
+            if (this.settings.labels.dynamicScale) {
+                textTransition.style("textLength", (d) => { return this.x.bandwidth() });
+                textTransition.style("font-size", null);
+            } else {
+                textTransition.style("textLength", null);
+                textTransition.style("font-size", (d) => { return this.x.bandwidth()/3 * this.settings.labels.manualScale + "px"; })
+            }
+
+            textTransition.attr("x", (d) => { return this.x(String((<DataPoint> d).bucket)) + this.x.bandwidth()/2; })
+                .attr("y", (d) => { return this.y((<DataPoint> d).measure); })
+                .text((d) => {
                     let dataPoint: DataPoint = <DataPoint> d;
                     if (dataPoint.measure === null || dataPoint.target === null)
-                        return 0;
+                        return "";
                     else
-                        return Math.abs(this.y(dataPoint.target) - this.y(dataPoint.measure));
-                });
-
-            // Handle label rendering
-            if (this.settings.labels.show) {
-                this.container.selectAll(".label").style("display", null);
-                let textTransition = this.container.selectAll(".label").transition()
-                    .duration(3000/count)
-                    .delay((d, i) => { return (i*1000/count) });
-
-                if (this.settings.labels.dynamicScale) {
-                    textTransition.style("textLength", (d) => { return this.x.bandwidth() });
-                    textTransition.style("font-size", null);
-                } else {
-                    textTransition.style("textLength", null);
-                    textTransition.style("font-size", (d) => { return this.x.bandwidth()/3 * this.settings.labels.manualScale + "px"; })
-                }
-
-                textTransition.attr("x", (d) => { return this.x(String((<DataPoint> d).bucket)) + this.x.bandwidth()/2; })
-                    .attr("y", (d) => { return this.y((<DataPoint> d).measure); })
-                    .text((d) => { return d3.format(this.settings.labels.format)((<DataPoint> d).measure); })
-                    .style("dominant-baseline", (d) => { return (<DataPoint> d).measure > (<DataPoint> d).target ? "auto" : "hanging"; })
-                    .style("display", null);
-            } else {
-                this.container.selectAll(".label").style("display", "none");
-            }
+                        return d3.format(this.settings.labels.format)((<DataPoint> d).measure);
+                    })
+                .style("dominant-baseline", (d) => { return (<DataPoint> d).measure > (<DataPoint> d).target ? "auto" : "hanging"; })
+                .style("display", null);
+        } else {
+            this.container.selectAll(".label").style("display", "none");
         }
     }
 }
