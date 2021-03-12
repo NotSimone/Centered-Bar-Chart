@@ -122,15 +122,25 @@ export class Visual implements IVisual {
                 .attr("width", this.x.bandwidth())
                 .attr("y", (d) => { return this.y((<DataPoint> d).target) })
                 .attr("height", 0 )
-                .attr("class", "bar")
-            .on("click", (d) => {
-                // Allow selection only if the visual is rendered in a view that supports interactivity (e.g. Report)
-                if (this.host.allowInteractions) {
-                    this.selectionManager.select(d.selectionId)
-                    this.redraw(null);
-                    event.preventDefault();
+                .attr("class", "bar");
+
+        bars.enter()
+            .append("rect")
+                .attr("x", (d) => { return this.x(String((<DataPoint> d).bucket)) })
+                .attr("width", this.x.bandwidth())
+                .attr("y", 0)
+                .style("opacity", 0)
+                .attr("height", this.containerHeight)
+                .attr("class", "clickbar")
+                .on("click", (d) => {
+                    // Allow selection only if the visual is rendered in a view that supports interactivity (e.g. Report)
+                    if (this.host.allowInteractions) {
+                        this.selectionManager.select(d.selectionId)
+                        this.redraw(null);
+                        event.preventDefault();
+                    }
                 }
-            });
+            );
         // Remove entries when no longer needed
         bars.exit()
             .remove();
@@ -294,7 +304,6 @@ export class Visual implements IVisual {
 
         // Y axis
         // Lazy way of handing negative values - just try both *0.9 and *1.1 and hit them with the math functions
-        debugger;
         let upper = this.settings.axisScaling.show ? this.settings.axisScaling.upper : Math.max(this.dataMeasureMax * 0.8, this.dataMeasureMax * 1.2, this.dataTargetMax * 0.8, this.dataTargetMax * 1.2);
         let lower = this.settings.axisScaling.show ? this.settings.axisScaling.lower : Math.min(this.dataMeasureMin * 0.8, this.dataMeasureMin * 1.2, this.dataTargetMin * 0.8, this.dataTargetMin * 1.2);
 
@@ -333,12 +342,18 @@ export class Visual implements IVisual {
      */
     private redraw(options: VisualUpdateOptions) {
         let bars = this.container.selectAll(".bar");
+        let clickbars = this.container.selectAll(".clickbar");
+
         // Scale transition time based on the count so the total animation time is constant
         let count = bars.size();
 
         let currentlySelected = this.selectionManager.getSelectionIds();
 
         let barTransition = bars.transition()
+            .duration(3000/count)
+            .delay((d, i) => { return (i*1000/count) });
+
+        let clickbarTransition = clickbars.transition()
             .duration(3000/count)
             .delay((d, i) => { return (i*1000/count) });
 
@@ -371,6 +386,10 @@ export class Visual implements IVisual {
             // Fill
             .attr("fill", (d) => { return ((<DataPoint> d).measure >= (<DataPoint> d).target) !== this.settings.invertColours.show ? this.colour.positive : this.colour.negative; })
             .attr("fill-opacity", (d, i) => { return (highlightIndex.length == 0 || highlightIndex.includes(i)) ? 1 : 0.4; });
+
+        // Handle bar size changes/movements
+        clickbarTransition.attr("x", (d) => { return this.x(String((<DataPoint> d).bucket)); })
+            .attr("width", this.x.bandwidth());
 
         // Handle label rendering
         if (this.settings.labels.show) {
